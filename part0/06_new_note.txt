@@ -1,0 +1,7 @@
+browser->server: HTTP POST https://studies.cs.helsinki.fi/exampleapp/notesRedirect Request to ew_notePOS
+server-->browser: Status code 201
+
+note over browser:
+browser starts executing js-code that
+updates the list with the new note
+end note
