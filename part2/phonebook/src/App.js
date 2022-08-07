@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 
 const Filter = ({value, onChange}) =>
   <div>
@@ -38,10 +39,12 @@ const Persons = ({persons, nameFilter}) => {
     )
   }
   return <table>
-    {
-      personsToShow.map(person =>
-      <Person key={person.name} person={person} />
-    )}
+    <tbody>
+      {
+        personsToShow.map(person =>
+        <Person key={person.name} person={person} />
+      )}
+    </tbody>
   </table>
 }
 
@@ -53,12 +56,7 @@ const Person = ({person}) =>
 
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-  ])
+  const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [nameFilter, setNameFilter] = useState('')
@@ -79,6 +77,15 @@ const App = () => {
       alert(`${newName} is already added to the phonebook`)
     }
   }
+
+  const getPersonsHook = () => {
+    axios
+      .get('http://localhost:3001/persons')
+      .then(response => {
+        setPersons(response.data)
+      })
+  }
+  useEffect(getPersonsHook, [])
 
   return (
     <div>
