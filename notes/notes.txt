@@ -1,0 +1,472 @@
+Part 0:
+  Code 200 = SUCCESS
+  The network tab shows requests
+    Response-Headers is quite important
+      content-type tells us the type of the response (Ex: text/html tells us that the text is utf-8 and formatted in html)
+        If this is the primary request for a webpage, then the page will be rendered if the content-type is text/html
+        If the webpage contains an image, a second request may need to be done (recursive requests)
+          Content type in this case might be image/png
+          Even though it is difficult to notice, the HTML page begins to render before the image has been fetched from the server.
+        Scripts have: content-type: application/javascript; charset=UTF-8
+      We can know the size of the request in bytes here as well
+    Response tab shows us what the request returned
+  Example node js:
+    const getFrontPageHtml = (noteCount) => {
+      return(`
+        <!DOCTYPE html>
+        <html><head></head>
+          <body>
+            ...  <p>number of notes created ${noteCount}</p> ...
+          </body>
+        </html>
+    `)
+    }
+    app.get('/', (req, res) => {
+      const page = getFrontPageHtml(notes.length)
+      res.send(page)
+    })
+    NOTE: Writing HTML in the midst of the code is of course not smart, but for old-school PHP-programmers it was a normal practice.
+  HTML documentation: https://developer.mozilla.org/
+  Printing: https://developer.mozilla.org/
+  Requests:
+    var xhttp = new XMLHttpRequest()
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) { // 4 means that the request is ready
+        // code that takes care of the server response
+      }
+    }
+    xhttp.open('GET', '/data.json', true)
+    xhttp.send()
+  DOM = Document Object Model - an API which enables us to change the tree of web pages
+    https://fullstackopen.com/en/part0/fundamentals_of_web_apps
+    https://studies.cs.helsinki.fi/exampleapp/
+  'document' variable is the root of the tree
+    Ex: document.getElementsByTagName('ul')[0]
+  CSS = Cascading Style Sheet:
+    .container { /* This is a class selector */
+      padding: 10px;
+      border: 1px solid;
+    }
+    Classes are attributes which we can add to HTML elements (ex: <div class="Container">)
+  Forms:
+    When submitting a form, we can return code 302, which is a URL Redirect request to the header of the form, so it is a request for the browser to redirect to the link in the header.
+    At least 3 HTTP requests: post the form, receive the response, do the get for the webpage (which may contain more requests)
+    On client:
+      <form action='/exampleapp/new_note' method='POST'>
+        <input type="text" name="note"><br>
+        <input type="submit" value="Save">
+      </form>
+    On server:
+      app.post('/new_note', (req, res) => {
+        notes.push({
+          content: req.body.note, // req.body is the body of the sent request, of which we can access its attributes
+          date: new Date(),
+        })
+        return res.redirect('/notes') // redirect request
+      })
+  AJAX = Asynchronous JavaScript and XML:
+    RESTful APIs
+  SPA - Single Page Application:
+    var form = document.getElementById('notes_form')
+    form.onsubmit = function(e) {
+      e.preventDefault() // prevents default behaviour of sending something back to client
+      ...
+    }
+  Javascript Libraries:
+    JQuery was good before, but now not so justified
+    Nowadays React is most popular
+    Redux is frequently used with React
+    Recently VueJS has been gaining traction
+  HTML https://developer.mozilla.org/en-US/docs/Learn/Getting_started_with_the_web/HTML_basics
+    Element: <tag>[attributes] content<closing tag>
+      attribute values should be quoted (it is a standard)
+    Links: <a href="http...">test here</a>
+  CSS: https://developer.mozilla.org/en-US/docs/Learn/Getting_started_with_the_web/CSS_basics
+    <link href="styles/style.css" rel="stylesheet"> // To add a CSS sheet (place this in the <head>)
+    Format:
+      selectors: {
+        property: value; // Collectively, the property and value are called a Declaration
+      } // Collectively, the whole structure is called a ruleset
+    Ex:
+      p, li, h1 {
+        color: red;
+      }
+    Selecors:
+      Element selector: p selects <p>
+      ID selector: #myid selects <p id="myid">
+      Class selector: .my-class selects <p class="my-class">
+      Attribute selector: img[src] selects <img src="myimage.png"> but not <img>
+      Pseudo-class selector: a:hover selects <a>, but only when the mouse pointer is hovering over the link.
+    Inner elements get higher priority css than the rules for the outer elements
+    Margin -> Border -> Padding
+    Ex:
+      body {
+        width: 600px;
+        margin: 0 auto;
+        background-color: #FF9500;
+        padding: 0 20px 20px 20px;
+        border: 5px solid black;
+      }
+      img { // center the image
+        display: block;
+        margin: 0 auto;
+      }
+  HTML Forms: https://developer.mozilla.org/en-US/docs/Learn/Forms/Your_first_form
+    Use the <form> tag, Ex: <form action="/my-handling-form-page" method="post"></form> // standard to at least set action and method attributes
+    Ex of <input>:
+      <label for="mail">E-mail:</label> // notice the 'for' attribute
+      <input type="email" id="mail" name="user_email">
+        type="email" ensures that we use the correct type (client-side form validation). Also causes more appropriate keyboard layout such as having the @ symbol on smartphones
+        The name attribute tells the browser the key to the piece of data associated with that item, which is the value
+    Ex of <textarea>:
+      <label for="msg">Message:</label>
+      <textarea id="msg" name="user_message">default text</textarea>
+    <input> does not need a closing element, while <textarea> does
+    The for label has other uses such as allowing screenreaders to read the form, allowing further touch functionality, etc
+    Buttons:
+      Ex: <button type="submit">Send your message</button>
+      Type can be: submit (executes 'action' of form), reset (resets all to default value, considered bad practice to use it from UX POV), button (custom functionality through js)
+  npm start // command to start the application from the root
+  npx create-react-app <app name> // command to start a react app with all the node modules and all
+
+Part 1a - React:
+  const App = () => ( // constant variable App is set to a function which takes no variables
+    //return ( //optional since it is just a single item
+      <div>
+        <p>Hello world</p>
+      </div>
+    // )
+  )
+  Dynamic content:
+    const App = () => {
+      const a = 10
+      const b = 20
+      return ( // no longer optional
+        <div> // The div (outermost components) is necessary
+          <p>
+            {a} plus {b} is {a + b}
+          </p>
+        </div>
+      )
+    }
+  JSX: The tool we are using to write HTML in React
+    After writing the above, Babel will convert our JSX to this:
+      return React.createElement(
+        'div',
+        null,
+        React.createElement(
+          'p', null, a, ' plus ', b, ' is ', a + b
+        )
+      )
+    In JSX we must close every tag, including <br>, which we must write as <br />
+  Custom components:
+    const Hello = (props) => { // NAME MUST BE CAPITALISED!! This is also good to differentiate React vs HTML components
+      return (<div><p>Hello world my name is {props.name} and I am {props.age}</p></div>)
+    }
+    const App = () => {
+      const age = 22
+      return (
+        <div>
+          <Hello name="Daniel" age={26+10}/> // note how we are using hello as a component here!
+          <Hello name="Cauchi age={age}"/> // note how we are using hello as a component here!
+        </div>
+      )
+    }
+  Cleaning divs:
+    return (
+      <> // if a div is unecessary, we can use this empty element instead
+        <h1>Greetings</h1>
+        <Hello name="Maya" age={26 + 10} />
+        <Hello name={name} age={age} />
+        <Footer />
+      </>
+    )
+
+1b - Javascript:
+  `node script.js` -- to run js script
+  `node` opens the node js console
+  const - defines a constant variable
+  let - defines a normal variable
+    Variables defined with 'let' are removed after going out of scope
+    Variables defined with 'var' behave like python variables, where they keep living after going out of scope (unless they are function variables, of course)
+    Ex:
+      for(let i = 0; i<10; i++) {
+        console.log(i)
+      }
+      console.log(i) // Throws an error, because i was defined with 'let'
+    It is advised to always use let
+  The type of a variable can change during execution
+  Arrays:
+    const t = [1, -1, 3]
+    t.push(5)
+    console.log(t.length) // 4 is printed
+    console.log(t[1])     // -1 is printed
+    t.forEach(value => {  // FOR EACH loop
+      console.log(value)  // numbers 1, -1, 3, 5 are printed, each to own line
+    })
+  Although t is defined as a const, the array can be modified. const just means that t will always point to the same array
+  t.concat(x) is preferred than push, because it creates a new array and adds x to it (leaving the original array intact, as it should be immutable)
+    Ex:
+      const t = [1, -1, 3]
+      const t2 = t.concat(5)
+  Map: const m2 = t.map(value => '<li>' + value + '</li>')
+  Destructing assignment:
+    const t = [1, 2, 3, 4, 5]
+    const [first, second, ...rest] = t
+    console.log(first, second)  // 1, 2 is printed
+    console.log(rest)          // [3, 4, 5] is printed
+  Objects:
+    const object1 = { // Definition by Object Literals
+      name: 'Arto Hellas',
+      age: 35,
+      education: 'PhD',
+    }
+    console.log(object1.name)         // Arto Hellas is printed
+    console.log(object1['age'])       // 35 is printed
+    object1.address = 'Helsinki'      // Adding properties to an object on the fly
+    object1['secret number'] = 12341  // Adding properties to an object on the fly. Note, we cannot access this using dot notation due to the space
+  Functions:
+    const sum = (p1, p2) => {
+      console.log(p1)
+      console.log(p2)
+      return p1 + p2
+    }
+    const result = sum(1, 5)
+    // Functions can be defined with the 'function' keyword however we will stick to the arrow syntax
+  Object methods and 'this' (we will not need this since we can use react hooks):
+    const arto = {
+      name: 'Arto Hellas',
+      age: 35,
+      education: 'PhD',
+      greet: function() { // A FUNCTION!
+        console.log('hello, my name is ' + this.name)
+      },
+    }
+    arto.growOlder = function() { // assigning function after object creation
+      this.age += 1
+    }
+    arto.greet()       // "hello, my name is Arto Hellas" gets printed
+    const referenceToGreet = arto.greet
+    referenceToGreet() // prints "hello, my name is undefined" // This is because 'this' will refer to the global object.
+    WE WILL BE AVOIDING 'this' because it is difficult to keep track of
+  Basic types of javascript: Boolean, Null, Undefined, Number, String, Symbol, BigInt, Object
+  Classes: // AVOID THESE, use React Hooks instead
+    class Person {
+      constructor(name, age) {
+        this.name = name
+        this.age = age
+      }
+      greet() {
+        console.log('hello, my name is ' + this.name)
+      }
+    }
+    const adam = new Person('Adam Ondra', 35)
+    adam.greet()
+    const janja = new Person('Janja Garnbret', 22)
+    janja.greet()
+  Functions can return functions :o
+
+1c - Component state, event handlers:
+  We can have functions within functions, so within components we can have helper functions
+  The following are the same:
+  1) const bornYear = () => new Date().getFullYear() - age
+  2) const bornYear = () => { return new Date().getFullYear() - age }
+  Destructuring:
+    const Hello = (props) => {
+      const { name, age } = props // THIS is destructuring
+      ...
+    }
+    const Hello = ({ name, age }) => { // We can also do this
+  Rerendering:
+    const refresh = () => {
+      ReactDOM.createRoot(document.getElementById('root')).render(
+        <App counter={counter} />
+      )
+    }
+  setInterval: a function to execute a code every 'delay' milliseconds. First execution happens after 'delay'
+    setInterval(code, delay)
+    setInterval(func, delay, arg0, arg1, /* ... ,*/ argN)
+  Stateful components:
+    import { useState } from 'react' // import useState
+    const App = () => {
+      // The counter variable is assigned the initial value of state which is zero.
+      // The variable setCounter is assigned to a function that will be used to modify the state.
+      const [ counter, setCounter ] = useState(0)
+      setTimeout( // sets a timer which executes a function or specified piece of code once the timer expires
+        () => setCounter(counter + 1), // We use the setCounter function here initialised in useState
+        1000
+      )
+      return (
+        <div>{counter}</div>
+      )
+    } // The whole component (App) is rerendered when its state changes (after the timeout)
+      // The state is only initialised to 0 the first time, otherwise it keeps its state, so that counter can keep being incremented
+  Event handlers:
+    We can handle events by using event handlers, which are properties of the html elements
+    Example:
+      const handleClick = () => { console.log('clicked') }
+      <button onClick={handleClick}>
+        plus
+      </button>
+    Example 2 (Inline lambda):
+      <button onClick={() => setCounter(counter + 1)}>
+  Passing state to child components:
+    const Button = ({ onClick, text }) => (
+      <button onClick={onClick}>  // 'onClick' as a prop is a standard naming convention
+        {text}
+      </button>
+    )
+    const Display = ({ counter }) => <div>{counter}</div>
+    const App = () => {
+      const [ counter, setCounter ] = useState(0) // We pass the state to the child component 'Display'
+      ...
+      return (
+        <div>
+          <Display counter={counter}/>
+          <Button
+            ....
+
+1d - A more complex state, debugging React apps
+  To downgrade react, go to package.json and change the versions there, then run 'npm install'
+  Furthermore, for React17, the correct way to do your index.js is the following:
+    import ReactDOM from 'react-dom'
+    import App from './App'
+    ReactDOM.render(<App />, document.getElementById('root'))
+  If we want our state to contain a more complex object, we can do:
+    const [clicks, setClicks] = useState({left: 0, right: 0}) // now clicks == {left: 0, right: 0}
+    const handleLeftClick = () => { // The function 'setClicks' must now update the whole object
+      const newClicks = {
+        ...clicks // NOTICE THIS SYNTAX: this creates an object which is equivalent to clicks. Using this syntax we do not have to specify the copy for everything
+        left: clicks.left + 1, // Then this line tells it to change the value of left
+      }
+      setClicks(newClicks)
+    }
+    We could replace the above function with:
+      const handleLeftClick = () => setClicks({ ...clicks, left: clicks.left + 1 })
+      IT IS FORBIDDEN IN REACT TO MUTATE STATE DIRECTLY
+  <array of strings>.join(' ') will return a string with all the strings in the array concatenated with a space between each one
+  For console logging:
+    console.log('props value is', props) // separate values by ',' not '+'
+  'debugger' command will pause execution and start the debugger anywhere in the code
+  You can also access the debugger without the debugger command by adding breakpoints in the Sources tab
+    Inspecting the values of the component's variables can be done in the Scope-section
+  React-developer tools chrome extension: https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi
+    Adds new 'Components' tab in the developer tools, and shows the state of Hooks (hooks are for example the custom 'Button' classes we have been creating. 'App' is a hook as well)
+    Can be used to inspect the different React elements in the application, along with their state and props
+  DO NOT CALL 'useState()' WITHIN A LOOP OR CONDITIONAL STATEMENT
+  Functions returning functions:
+    const setToValue = (newValue) => () => {
+      console.log('value now', newValue)  // print the new value to console
+      setValue(newValue)
+    }
+  We can pass event handlers as properties to child components
+  DO NOT DEFINE COMPONENTS WITHIN OTHER COMPONENTS: React treats a component defined inside of another component as a new component in every render, so it cannot optimize it
+  Official React documentation: https://reactjs.org/docs/hello-world.html
+
+2a - Rendering a collection, modules
+  Javascript Arrays:
+    Filter and reject:
+      const words = ['spray', 'limit', 'elite', 'exuberant', 'destruction', 'present'];
+      words.filter(word => word.length > 6); // expected output: Array ["exuberant", "destruction", "present"]
+    Reduce:
+      const sumWithInitial = array1.reduce(
+        (previousValue, currentValue) => previousValue + currentValue,
+        initialValue
+      );
+      const total = parts.reduce( (previous, current) => previous + current.exercises, 0) // IF WE ARE DEALING WITH OBJECTS, WE CANNOT DO 'previous.exercises'
+  We can put javascript into HTML like so:
+    return (
+      <div>
+        <h1>Notes</h1>
+        <ul>
+          {notes.map(note => // NOTE HOW MAP IS COVERED IN {} TO INDICATE JS CODE
+            <li key={note.id}> // each li must have a unique key. We can use the array index as the key but it may cause problems if we reorder our stuff. Keys make our code more efficient too
+              {note.content}
+            </li>
+          )} // puts the notes' contents as a list
+        </ul>
+      </div>
+    )
+  You can give some id property to objects using a uuid generator (like nanoid)
+  Exceptions when you can use the index of the array as an id. All 3 must satisfy:
+    1. the list and items are static–they are not computed and do not change
+    2. the items in the list have no ids
+    3. the list is never reordered or filtered
+  Source code for example application: https://github.com/fullstack-hy2020/part2-notes/tree/part2-1
+  The key must be defined for the component we are iterating over:
+    const Note = ({ note }) => {
+      // we cannot have the key here
+      return (<li>{note.content}</li>)
+    }
+    const App ...
+      {notes.map(note =>
+          <Note key={note.id} note={note} /> // key must be where the map is
+      )}
+  Each component should be in its own js file
+    export default Note // command to export the component
+    import Note from './components/Note' // command to import a component within the components folder
+
+2b - Forms
+  <form onSubmit={addNote}> // AddNote is the name of a function with an 'event' as a parameter
+    <input />
+    <button type="submit">save</button>
+  </form>
+  ...
+  const addNote = (event) => {
+    event.preventDefault() // Default would be to send data to the client and reload
+    console.log('button clicked', event.target) // target would be the form
+  }
+  Controlled component: Method 1 of accessing the form's data
+    const handleNoteChange = (event) => {
+      console.log(event.target.value)
+      setNewNote(event.target.value)
+    }
+    <form onSubmit={addNote}>
+      <input
+        value={newNote}
+        onChange={handleNoteChange} // This will be called whenever we change the value of the input
+      />
+      ...
+  new Date().toISOString() // Current time in ISO format string
+  Filtering Displayed Elements:
+    const notesToShow = showAll // A variable with astate, so when it changes we renender it
+      ? notes
+      : notes.filter(note => note.important === true)
+    ...
+    <ul>
+      {notesToShow.map(note => // we render the notes only which we want to show
+        <Note key={note.id} note={note} />
+      )}
+    </ul>
+
+2c - Getting Data from the Server
+	json-server (a server which just serves and lets us manipulate json file - useful for testing)
+		npm install -g json-server
+		npm install json-server --save-dev # installing json-server as a development dependency only, not for production
+		npx json-server --port 3001 --watch db.json # db.json is a file on our disk
+		Add: '"server": "json-server -p3001 --watch db.json"' to the "scripts" section of the package.json
+	Nowadays it is not recommended to use XHR/XMLHttpRequests, but rather to use the 'fetch' method which is based on 'promises'
+	When we do requests, the code within the request handler is executes asynchronously once the request is finished
+	axios (a more pleasant 'fetch')
+		const promise = axios.get('http://localhost:3001/notes')
+		promise.then(response => {
+			console.log(response)
+		})
+	Above in a single statement:
+		axios
+			.get('http://localhost:3001/notes')
+			.then(response => {
+				const notes = response.data
+				console.log(notes)
+			})
+	We have previously used 'State Hooks'. Now we will use 'Effect Hooks': The Effect Hook lets you perform side effects on function components. Data fetching, setting up a subscription, and manually changing the DOM in React components are all examples of side effects.
+		const hook = () => {
+			console.log('effect')
+			axios
+				.get('http://localhost:3001/notes')
+				.then(response => {
+					console.log('promise fulfilled')
+					setNotes(response.data)
+				})
+		}
+		useEffect(hook, [])
