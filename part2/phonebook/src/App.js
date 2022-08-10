@@ -10,7 +10,7 @@ const Filter = ({value, onChange}) =>
     />
   </div>
 
-const PersonForm =  ({onSubmit, nameValue, nameOnChange, numberValue, numberOnChange}) =>
+const PersonForm = ({onSubmit, nameValue, nameOnChange, numberValue, numberOnChange}) =>
       <form onSubmit={onSubmit}>
         <div>
           name:
@@ -57,12 +57,29 @@ const Person = ({person, deletePerson}) =>
 
 const DeleteButton = ({onClick}) => <button onClick={onClick}>delete</button>
 
+const Notification = ({ message, positive }) => {
+  if (message === null) { return null }
+  const notificationStyle = {
+    color: positive? 'green': 'red',
+    background: 'lightgrey',
+    fontSize: '20px',
+    borderStyle: 'solid',
+    borderRadius: '5px',
+    padding: '10px',
+    marginBottom: '10px'
+  }
+  return <div style={notificationStyle}>{message}</div>
+}
 
 const App = () => {
+  const emptyNotification = {message: null, positive: true}
+  const notificationTime = 3000
+
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [nameFilter, setNameFilter] = useState('')
+  const [notification, setNotification] = useState(emptyNotification)
 
   const handleNewNameChange = (event) => setNewName(event.target.value)
   const handleNewNumberChange = (event) => setNewNumber(event.target.value)
@@ -78,6 +95,8 @@ const App = () => {
           setPersons(persons.concat(person))
           setNewName('')
           setNewNumber('')
+          setNotification({message: `${person.name} added to phonebook`, positive: true})
+          setTimeout(() => { setNotification(emptyNotification) }, notificationTime)
         })
     } else {
       if (!window.confirm(`${newName} is already in the phonebook, replace the old number with the new one?`)) {
@@ -86,10 +105,12 @@ const App = () => {
       personService
         .putPerson({...existingPerson, number: newNumber})
         .then(newPerson => {
-          setPersons(persons.map(person => person.id == newPerson.id? newPerson: person))
+          setPersons(persons.map(person => person.id === newPerson.id? newPerson: person))
           setNewName('')
           setNewNumber('')
-      })
+          setNotification({message: `${newPerson.name}'s number changed in phonebook`, positive: true})
+          setTimeout(() => { setNotification(emptyNotification) }, notificationTime)
+        })
     }
   }
 
@@ -97,7 +118,16 @@ const App = () => {
     if(window.confirm(`Delete ${person.name}`)) {
       personService
         .deletePerson(person)
-        .then(setPersons(persons.filter(personFiltered => personFiltered.id !== person.id)))
+        .then(_ => {
+          setPersons(persons.filter(personFiltered => personFiltered.id !== person.id))
+          setNotification({message: `${person.name} deleted from phonebook`, positive: true})
+          setTimeout(() => { setNotification(emptyNotification) }, notificationTime)
+        })
+        .catch(error => {
+          setNotification({message: `${person.name} already deleted from phonebook`, positive: false })
+          setTimeout(() => { setNotification(emptyNotification) }, notificationTime)
+          setPersons(persons.filter(personFiltered => personFiltered.id !== person.id))
+        })
     }
   }
 
@@ -110,6 +140,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification.message} positive={notification.positive} />
       <Filter value={nameFilter} onChange={handleNameFilterChange}/>
       <h3>Add a new</h3>
       <PersonForm
