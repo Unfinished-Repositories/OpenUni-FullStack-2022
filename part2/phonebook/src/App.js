@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personService from './services/persons'
 
 const Filter = ({value, onChange}) =>
   <div>
@@ -31,7 +31,7 @@ const PersonForm =  ({onSubmit, nameValue, nameOnChange, numberValue, numberOnCh
         </div>
       </form>
 
-const Persons = ({persons, nameFilter}) => {
+const Persons = ({persons, nameFilter, deletePerson}) => {
   let personsToShow = persons
   if (nameFilter !== '') {
     personsToShow = persons.filter(
@@ -42,17 +42,20 @@ const Persons = ({persons, nameFilter}) => {
     <tbody>
       {
         personsToShow.map(person =>
-        <Person key={person.name} person={person} />
+        <Person key={person.name} person={person} deletePerson={deletePerson}/>
       )}
     </tbody>
   </table>
 }
 
-const Person = ({person}) =>
+const Person = ({person, deletePerson}) =>
   <tr>
     <td>{person.name}</td>
     <td>{person.number}</td>
+    <td><DeleteButton onClick={() => deletePerson(person)} /></td>
   </tr>
+
+const DeleteButton = ({onClick}) => <button onClick={onClick}>delete</button>
 
 
 const App = () => {
@@ -67,23 +70,40 @@ const App = () => {
 
   const addPerson = (event) => {
     event.preventDefault()
-    if (
-      persons.map(person => person.name).find((name) => name === newName)
-      === undefined
-    ) {
-      setPersons(persons.concat({name: newName, number: newNumber}))
-      setNewName('')
+    const existingPerson = persons.find(person => person.name === newName)
+    if (existingPerson === undefined) {
+      personService
+        .postPerson({name: newName, number: newNumber})
+        .then(person => {
+          setPersons(persons.concat(person))
+          setNewName('')
+          setNewNumber('')
+        })
     } else {
-      alert(`${newName} is already added to the phonebook`)
+      if (!window.confirm(`${newName} is already in the phonebook, replace the old number with the new one?`)) {
+        return
+      }
+      personService
+        .putPerson({...existingPerson, number: newNumber})
+        .then(newPerson => {
+          setPersons(persons.map(person => person.id == newPerson.id? newPerson: person))
+          setNewName('')
+          setNewNumber('')
+      })
+    }
+  }
+
+  const deletePerson = (person) => {
+    if(window.confirm(`Delete ${person.name}`)) {
+      personService
+        .deletePerson(person)
+        .then(setPersons(persons.filter(personFiltered => personFiltered.id !== person.id)))
     }
   }
 
   const getPersonsHook = () => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
-      })
+    personService.getAll()
+      .then(persons => setPersons(persons))
   }
   useEffect(getPersonsHook, [])
 
@@ -100,7 +120,7 @@ const App = () => {
         numberOnChange={handleNewNumberChange}
       />
       <h3>Numbers</h3>
-      <Persons persons={persons} nameFilter={nameFilter}/>
+      <Persons persons={persons} nameFilter={nameFilter} deletePerson={deletePerson}/>
       </div>
   )
 }
